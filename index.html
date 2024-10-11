@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Login</title>
+    <title>Login</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,8 +20,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 90%; /* Responsive width */
-            max-width: 396px; /* Max width for larger screens */
+            width: 90%; 
+            max-width: 396px;
         }
         h1 {
             color: #1877f2;
@@ -43,7 +43,7 @@
             padding: 14px 16px;
             width: 100%;
             margin-bottom: 12px;
-            box-sizing: border-box; /* Include padding and border in element's total width */
+            box-sizing: border-box;
         }
         button {
             background-color: #1877f2;
@@ -56,7 +56,7 @@
             width: 100%;
             cursor: pointer;
             margin-bottom: 12px;
-            transition: background-color 0.3s; /* Smooth transition */
+            transition: background-color 0.3s;
         }
         button:hover {
             background-color: #166fe5;
@@ -73,7 +73,7 @@
             border-bottom: 1px solid #dadde1;
             margin: 20px 0;
         }
-        .create-account {
+        .create-account, .google-login, .facebook-login {
             background-color: #42b72a;
             border: none;
             border-radius: 6px;
@@ -83,9 +83,13 @@
             padding: 14px 16px;
             width: 100%;
             cursor: pointer;
+            margin-bottom: 12px;
         }
-        .create-account:hover {
-            background-color: #36a420;
+        .google-login {
+            background-color: #db4437;
+        }
+        .facebook-login {
+            background-color: #4267b2;
         }
         .error {
             color: #ff0000;
@@ -99,18 +103,28 @@
 </head>
 <body>
     <div class="container">
-        <h1>facebook</h1>
-        <p>Connect with friends and the world around you on Facebook.</p>
+        <h1>RX MHA</h1>
+        <p>Connect with friends and the world around you.</p>
+
+        <!-- Email/Password Login Form -->
         <form id="loginForm">
             <input type="email" id="loginEmail" placeholder="Email" required>
             <input type="password" id="loginPassword" placeholder="Password" required>
             <div id="loginError" class="error"></div>
             <button type="submit">Log In</button>
         </form>
+
+        <!-- Google and Facebook Login Buttons -->
+        <button class="google-login" id="googleLoginBtn">Login with Google</button>
+        <button class="facebook-login" id="facebookLoginBtn">Login with Facebook</button>
+
         <a href="#" class="forgot-password">Forgot password?</a>
         <div class="divider"></div>
+
+        <!-- Create New Account Button -->
         <button id="showCreateAccount" class="create-account">Create New Account</button>
-        
+
+        <!-- Sign-up Form -->
         <form id="createAccountForm" class="hidden">
             <input type="text" id="firstName" placeholder="First name" required>
             <input type="text" id="lastName" placeholder="Last name" required>
@@ -125,6 +139,7 @@
     <script type="module">
         // Import Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
         import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
 
         // Firebase configuration
@@ -140,15 +155,38 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
 
-        const loginForm = document.getElementById('loginForm');
-        const createAccountForm = document.getElementById('createAccountForm');
-        const showCreateAccountBtn = document.getElementById('showCreateAccount');
-        const backToLoginBtn = document.getElementById('backToLogin');
-        const loginError = document.getElementById('loginError');
-        const createAccountError = document.getElementById('createAccountError');
+        // Google Login
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+            .then((result) => {
+                alert('Google Login Successful');
+                window.location.href = "https://rxwather.netlify.app/";
+            })
+            .catch((error) => {
+                alert('Google Login Failed: ' + error.message);
+            });
+        });
+
+        // Facebook Login
+        const facebookLoginBtn = document.getElementById('facebookLoginBtn');
+        facebookLoginBtn.addEventListener('click', () => {
+            const provider = new FacebookAuthProvider();
+            signInWithPopup(auth, provider)
+            .then((result) => {
+                alert('Facebook Login Successful');
+                window.location.href = "https://rxwather.netlify.app/";
+            })
+            .catch((error) => {
+                alert('Facebook Login Failed: ' + error.message);
+            });
+        });
 
         // Sign-up event handler
+        const createAccountForm = document.getElementById('createAccountForm');
         createAccountForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const firstName = document.getElementById('firstName').value;
@@ -164,17 +202,18 @@
                     password: newPassword
                 }).then(() => {
                     alert('Account created successfully!');
-                    createAccountError.textContent = '';
-                    createAccountForm.reset(); // Clear form after submission
+                    document.getElementById('createAccountError').textContent = '';
+                    createAccountForm.reset();
                 }).catch((error) => {
-                    createAccountError.textContent = 'Error: ' + error.message;
+                    document.getElementById('createAccountError').textContent = 'Error: ' + error.message;
                 });
             } else {
-                createAccountError.textContent = 'Please fill in all fields.';
+                document.getElementById('createAccountError').textContent = 'Please fill in all fields.';
             }
         });
 
         // Login event handler
+        const loginForm = document.getElementById('loginForm');
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -187,39 +226,32 @@
                         const userData = snapshot.val();
                         if (userData.password === password) {
                             alert('Login successful!');
-                            loginError.textContent = '';
-                            window.location.href = "https://rxwather.netlify.app/"; // Redirect to the new page
+                            document.getElementById('loginError').textContent = '';
+                            window.location.href = "https://rxwather.netlify.app/";
                         } else {
-                            loginError.textContent = 'Incorrect password.';
+                            document.getElementById('loginError').textContent = 'Incorrect password.';
                         }
                     } else {
-                        loginError.textContent = 'User does not exist.';
+                        document.getElementById('loginError').textContent = 'No user found with this email.';
                     }
                 }).catch((error) => {
-                    loginError.textContent = 'Error: ' + error.message;
+                    document.getElementById('loginError').textContent = 'Error: ' + error.message;
                 });
             } else {
-                loginError.textContent = 'Please enter both email and password.';
+                document.getElementById('loginError').textContent = 'Please enter both email and password.';
             }
         });
 
-        // Toggle forms
+        // Show/Hide Create Account Form
+        const showCreateAccountBtn = document.getElementById('showCreateAccount');
+        const backToLoginBtn = document.getElementById('backToLogin');
         showCreateAccountBtn.addEventListener('click', function() {
-            loginForm.classList.add('hidden');
-            showCreateAccountBtn.classList.add('hidden');
-            createAccountForm.classList.remove('hidden');
+            document.getElementById('createAccountForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
         });
-
         backToLoginBtn.addEventListener('click', function() {
-            createAccountForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            showCreateAccountBtn.classList.remove('hidden');
-        });
-
-        // Forgot password link event
-        document.querySelector('.forgot-password').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Forgot Password link clicked!');
+            document.getElementById('createAccountForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
         });
     </script>
 </body>
